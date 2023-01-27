@@ -167,16 +167,23 @@ def run_sat_solver(m, assm):
   m.solve(assumptions=assm)
   return m.get_model()
 
-def extract_first_player_move(model):
-  print("extract move, To do")
+# for each variable in the first player move, we check if the assignment is true or false and return the assignment for entire block:
+def extract_first_player_move(model, first_vars):
+  cur_assignment = []
+  for var in first_vars:
+    if (var in model):
+      cur_assignment.append(var)
+    elif (-var in model):
+      cur_assignment.append(-var)
+  return cur_assignment
 
 
 # Main:
 if __name__ == '__main__':
   text = "Given a QBF, one can interactively play for validation\n both static validation i.e., playing with certificate and dynamic validation i.e., playing with QBF solver are availablec/n handles both ascii-aiger and cnf formats for certificates"
   parser = argparse.ArgumentParser(description=text,formatter_class=argparse.RawTextHelpFormatter)
-  parser.add_argument("--certificate", help="certificate path (AIG/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05/certificate.aag')
-  parser.add_argument("--instance", help="qbf instance (qcir/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05/qbf.qcir')
+  parser.add_argument("--certificate", help="certificate path (AIG/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05_SAT/certificate.aag')
+  parser.add_argument("--instance", help="qbf instance (qcir/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir')
   parser.add_argument("--player", help=textwrap.dedent('''
                                   player type:
                                   user = interactive user play
@@ -229,7 +236,8 @@ if __name__ == '__main__':
     if (k%2 == 0):
       assert(args.validation == "static")
       cur_move_model = run_sat_solver(m,moves_played_vars)
-      first_player_move = extract_first_player_move(cur_move_model)
+      #print(cur_move_model, parsed_matrix[k][1])
+      first_player_move = extract_first_player_move(cur_move_model, parsed_matrix[k][1])
       print("\nFirst player assignment:", first_player_move)
       #print(moves_played_vars)
     # if white player (for now user), then we get the move from terminal:
@@ -253,8 +261,12 @@ if __name__ == '__main__':
     else:
       second_player_move = input("\nEnter your move: ")
       second_player_assignment = second_player_move.split(" ")
-      print(second_player_assignment)
+
+      int_second_player_assignment = []
+      for var in second_player_assignment:
+        int_second_player_assignment.append(int(var))
+      print(int_second_player_assignment)
 
       # adding the second player assignment to the moves played for later assumptions:
-      moves_played_vars.extend(second_player_assignment)
+      moves_played_vars.extend(int_second_player_assignment)
 
