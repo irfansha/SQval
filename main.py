@@ -182,7 +182,7 @@ def extract_first_player_move(model, first_vars):
 if __name__ == '__main__':
   text = "Given a QBF, one can interactively play for validation\n both static validation i.e., playing with certificate and dynamic validation i.e., playing with QBF solver are availablec/n handles both ascii-aiger and cnf formats for certificates"
   parser = argparse.ArgumentParser(description=text,formatter_class=argparse.RawTextHelpFormatter)
-  parser.add_argument("--certificate", help="certificate path (AIG/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05_SAT/certificate.aag')
+  parser.add_argument("--certificate", help="certificate path (AAG/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05_SAT/certificate.aag')
   parser.add_argument("--instance", help="qbf instance (qcir/qdimacs)", default = 'intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir')
   parser.add_argument("--player", help=textwrap.dedent('''
                                   player type:
@@ -193,6 +193,7 @@ if __name__ == '__main__':
                                   static = only using certificate (default)
                                   dynamic = only using QBF solver
                                   hybrid = using certificate for first n layers and QBF solver for the rest'''),default = 'static')
+  parser.add_argument("--status", help=" instance status sat/unsat(1/0) (default 1)", type=int,default = 1)
   parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = 0)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
 
@@ -225,6 +226,14 @@ if __name__ == '__main__':
   m = Minisat22(bootstrap_with=formula.clauses)
 
 
+  # sat certificate, play every second move as an opponent:
+  if (args.status == 1):
+    time_step_modulo = 0
+  # else play as first player:
+  else:
+    time_step_modulo = 1
+
+
   # for assumption we remember the moves played
   moves_played_vars = []
 
@@ -233,10 +242,11 @@ if __name__ == '__main__':
     print("quantification layer: ", k)
 
     # if first player then we extract the assignment:
-    if (k%2 == 0):
+    if (k%2 == time_step_modulo):
       assert(args.validation == "static")
+      #print(moves_played_vars)
       cur_move_model = run_sat_solver(m,moves_played_vars)
-      #print(cur_move_model, parsed_matrix[k][1])
+      #print(len(cur_move_model), parsed_matrix[k][1])
       first_player_move = extract_first_player_move(cur_move_model, parsed_matrix[k][1])
       print("\nFirst player assignment:", first_player_move)
       #print(moves_played_vars)
