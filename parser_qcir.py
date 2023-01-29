@@ -2,13 +2,13 @@
 
 class PaserQCIR:
   #==========================================================================================
-  # Parses matrix lines:
-  def parse_matrix(self,matrix_lines):
-    # we can merge matrix lines if there are the same quatifier type:
+  # Parses prefix lines:
+  def parse_prefix(self,prefix_lines):
+    # we can merge prefix lines if there are the same quatifier type:
     previous_qtype = ''
 
-    for line in matrix_lines:
-      # asserting the line is part of matrix:
+    for line in prefix_lines:
+      # asserting the line is part of prefix:
       assert("exists" in line or "forall" in line)
       # removing spaces
       cleaned_line = line.replace(" ","")
@@ -32,16 +32,16 @@ class PaserQCIR:
 
       # we are in the same quantifier block:
       if (previous_qtype == cur_qtype):
-        self.parsed_matrix[-1][1].extend(int_cur_var_list)
+        self.parsed_prefix[-1][1].extend(int_cur_var_list)
       else:
         # a tuple of type and the var list:
-        self.parsed_matrix.append((cur_qtype,int_cur_var_list))
+        self.parsed_prefix.append((cur_qtype,int_cur_var_list))
         previous_qtype = cur_qtype
 
 
-    # assert the quantifier are alternating in the parsed_matrix:
-    for i in range(len(self.parsed_matrix)-1):
-      assert(self.parsed_matrix[i][0]!=self.parsed_matrix[i+1][0])
+    # assert the quantifier are alternating in the parsed_prefix:
+    for i in range(len(self.parsed_prefix)-1):
+      assert(self.parsed_prefix[i][0]!=self.parsed_prefix[i+1][0])
   #==========================================================================================
 
 
@@ -78,19 +78,17 @@ class PaserQCIR:
 
 
   # Reads qcir format:
-  # Parses matrix lines:
+  # Parses prefix lines:
   def parse_qcir_format(self):
 
     f = open(self.input_file,"r")
     qcir_lines = f.readlines()
     f.close()
 
-    matrix_lines = []
-    # cannot be 0, but initializing to 0:
-    output_gate = 0
+    prefix_lines = []
     gate_lines = []
 
-    # seperate matrix, output gate and inner gates:
+    # seperate prefix, output gate and inner gates:
     for line in qcir_lines:
       # we strip if there are any next lines or empty spaces:
       stripped_line = line.strip("\n").strip(" ")
@@ -99,16 +97,16 @@ class PaserQCIR:
         continue
       elif(line[0] == "#"):
         continue
-      # if exists/forall in the line then it is part of matrix:
+      # if exists/forall in the line then it is part of prefix:
       elif ("exists" in stripped_line or "forall" in stripped_line):
-        matrix_lines.append(stripped_line)
+        prefix_lines.append(stripped_line)
       elif ("output" in stripped_line):
         self.output_gate = int(stripped_line.strip(")").split("(")[-1])
       else:
         gate_lines.append(stripped_line)
 
-    # Parse matrix lines:
-    self.parse_matrix(matrix_lines)
+    # Parse prefix lines:
+    self.parse_prefix(prefix_lines)
 
     # Parse gate lines:
     self.parse_gates(gate_lines)
@@ -118,11 +116,11 @@ class PaserQCIR:
 
     flipped_and_assumed_string = ''
 
-    for i in range(len(self.parsed_matrix)):
-      layer_string = ",".join(str(x) for x in self.parsed_matrix[i][1])
+    for i in range(len(self.parsed_prefix)):
+      layer_string = ",".join(str(x) for x in self.parsed_prefix[i][1])
       if i < k:
         flipped_and_assumed_string += "exists(" + layer_string + ")\n"
-      elif (self.parsed_matrix[i][0] == "e"):
+      elif (self.parsed_prefix[i][0] == "e"):
         flipped_and_assumed_string += "exists(" + layer_string + ")\n"
       else:
         flipped_and_assumed_string += "forall(" + layer_string + ")\n"
@@ -148,7 +146,7 @@ class PaserQCIR:
 
   def __init__(self, input_qbf):
     self.input_file = input_qbf
-    self.parsed_matrix = []
+    self.parsed_prefix = []
     self.parsed_gates = []
     # remembering all gates for future assumptions:
     self.all_gates = []

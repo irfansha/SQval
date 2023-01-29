@@ -37,7 +37,7 @@ def run_sat_solver(m, assm):
 # run qbf solver with assumptions and return the outer most assignment:
 # creates a new qcir encoding with assumptions and gets the assignment:
 def run_qbf_solver(k,assm):
-  flipped_and_assumed_string = parsed_qcir_instance.flip_and_assume(k,assm)
+  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm)
   f = open("intermediate_files/temp_qbf.qcir","w")
   f.write(flipped_and_assumed_string)
   f.close()
@@ -88,8 +88,16 @@ if __name__ == '__main__':
   args = parser.parse_args()
   print(args)
 
-  # Reading the input problem file
-  parsed_qcir_instance = pqcir(args.instance)
+  # Reading the input instance file
+  # checking the first line of the file for the instance type:
+  with open(args.instance,"r") as f:
+    first_line = f.readline()
+  # for a qdimacs file, the first line is either a comment or preamble:
+  if ("c " == first_line[0:1] or "p " == first_line[0:1]):
+    parsed_instance = pqcir(args.instance)
+  # else it is a qcir file:
+  else:
+    parsed_instance = pqcir(args.instance)
 
   if (args.player == 'random'):
     random.seed(args.seed)
@@ -122,22 +130,22 @@ if __name__ == '__main__':
   # for assumption we remember the moves played
   moves_played_vars = []
 
-  for k in range(len(parsed_qcir_instance.parsed_matrix)):
+  for k in range(len(parsed_instance.parsed_prefix)):
 
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
       if (args.validation == "static"):
         cur_move_model = run_sat_solver(m,moves_played_vars)
-        Cert_player_move = extract_player_move(cur_move_model, parsed_qcir_instance.parsed_matrix[k][1])
+        Cert_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
         cur_move_model = run_qbf_solver(k,moves_played_vars)
-        QBF_player_move = extract_player_move(cur_move_model, parsed_qcir_instance.parsed_matrix[k][1])
+        QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
     # if white player (for now user), then we get the move from terminal:
     elif (args.player == 'random'):
-      number_of_vars = len(parsed_qcir_instance.parsed_matrix[k][1])
+      number_of_vars = len(parsed_instance.parsed_prefix[k][1])
       # generating a random number with random bits:
       second_player_move = random.getrandbits(number_of_vars)
       # retriving the binary bits from the random number:
@@ -146,9 +154,9 @@ if __name__ == '__main__':
       # generating random assignment based on the random bits:
       for i in range(number_of_vars):
         if (binary_string[i] == '0'):
-          second_player_assignment.append(-parsed_qcir_instance.parsed_matrix[k][1][i])
+          second_player_assignment.append(-parsed_instance.parsed_prefix[k][1][i])
         else:
-          second_player_assignment.append(parsed_qcir_instance.parsed_matrix[k][1][i])
+          second_player_assignment.append(parsed_instance.parsed_prefix[k][1][i])
 
       print("L"+ str(k) + " R-player plays:   ", second_player_assignment)
       # adding the second player assignment to the moves played for later assumptions:
