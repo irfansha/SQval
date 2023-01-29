@@ -10,6 +10,7 @@ from pysat.formula import CNF
 from pysat.solvers import Minisat22
 
 from parser_qcir import PaserQCIR as pqcir
+from parse_qdimacs import PaserQDIMACS as pqdimacs
 
 
 #==========================================================================================
@@ -36,7 +37,7 @@ def run_sat_solver(m, assm):
 
 # run qbf solver with assumptions and return the outer most assignment:
 # creates a new qcir encoding with assumptions and gets the assignment:
-def run_qbf_solver(k,assm):
+def run_quabs_solver(k,assm):
   flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm)
   f = open("intermediate_files/temp_qbf.qcir","w")
   f.write(flipped_and_assumed_string)
@@ -52,6 +53,31 @@ def run_qbf_solver(k,assm):
     int_partial_assignment = []
     for var in partial_assignment:
       int_partial_assignment.append(int(var))
+  return int_partial_assignment
+
+
+# run qbf solver with assumptions and return the outer most assignment:
+# creates a new qdmiacs encoding with assumptions and gets the assignment:
+def run_depqbf_solver(k,assm):
+  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm)
+  f = open("intermediate_files/temp_qbf.qdimacs","w")
+  f.write(flipped_and_assumed_string)
+  f.close()
+  #print(k, assm)
+
+  #print(flipped_and_assumed_string)
+  result = subprocess.run(['./solvers/depqbf/depqbf', '--qdo', '--no-dynamic-nenofex' , 'intermediate_files/temp_qbf.qdimacs'], stdout=subprocess.PIPE)
+  output = result.stdout.decode('utf-8')
+  #print(output)
+  int_partial_assignment = []
+  if ("s cnf 0" not in output):
+    output_lines = output.split("\n")
+    for i in range(1,len(output_lines)):
+      # making sure that the line is assignment:
+      if ('V' in output_lines[i]):
+        cur_var = output_lines[i].split(" ")[-2]
+        assert(len(output_lines[i].split(" ")) == 3)
+        int_partial_assignment.append(int(cur_var))
   return int_partial_assignment
 
 
@@ -92,12 +118,15 @@ if __name__ == '__main__':
   # checking the first line of the file for the instance type:
   with open(args.instance,"r") as f:
     first_line = f.readline()
+
   # for a qdimacs file, the first line is either a comment or preamble:
-  if ("c " == first_line[0:1] or "p " == first_line[0:1]):
-    parsed_instance = pqcir(args.instance)
+  if ("c " == first_line[0:2] or "p " == first_line[0:2]):
+    parsed_instance = pqdimacs(args.instance)
+    instance_type = "qdimacs"
   # else it is a qcir file:
   else:
     parsed_instance = pqcir(args.instance)
+    instance_type = "qcir"
 
   if (args.player == 'random'):
     random.seed(args.seed)
@@ -130,7 +159,7 @@ if __name__ == '__main__':
   # for assumption we remember the moves played
   moves_played_vars = []
 
-  for k in range(len(parsed_instance.parsed_prefix)):
+  for k in range(len(parsed_instance.parsed_prefix)-2):
 
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
@@ -140,7 +169,10 @@ if __name__ == '__main__':
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
-        cur_move_model = run_qbf_solver(k,moves_played_vars)
+        if (instance_type == "qcir"):
+          cur_move_model = run_quabs_solver(k,moves_played_vars)
+        else:
+          cur_move_model = run_depqbf_solver(k,moves_played_vars)
         QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
     # if white player (for now user), then we get the move from terminal:
