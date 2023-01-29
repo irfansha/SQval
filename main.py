@@ -159,12 +159,13 @@ if __name__ == '__main__':
   # for assumption we remember the moves played
   moves_played_vars = []
 
-  for k in range(len(parsed_instance.parsed_prefix)-2):
+  for k in range(len(parsed_instance.parsed_prefix)):
 
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
       if (args.validation == "static"):
         cur_move_model = run_sat_solver(m,moves_played_vars)
+        #print(parsed_instance.parsed_prefix[k][1])
         Cert_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
       elif (args.validation == "dynamic"):
