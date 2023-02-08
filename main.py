@@ -107,7 +107,9 @@ if __name__ == '__main__':
                                   static = only using certificate (default)
                                   dynamic = only using QBF solver
                                   hybrid = using certificate for first n layers and QBF solver for the rest'''),default = 'static')
-  parser.add_argument("--status", help=" instance status sat/unsat(1/0) (default 1)", type=int,default = 1)
+  parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
+  parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.txt')
+  parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
   parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = 0)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
 
@@ -148,8 +150,19 @@ if __name__ == '__main__':
     m = Minisat22(bootstrap_with=formula.clauses)
 
 
+  if (args.assertion_check == 1):
+    # we parse the assertions file:
+    # we expect a single line separated with white spaces:
+    with open(args.assertion_infile,"r") as f:
+      first_line = f.readline()
+      assertion_line_list = first_line.strip("\n").split(" ")
+      assertion_list = []
+      for var in assertion_line_list:
+        assertion_list.append(int(var))
+    
+  
   # sat certificate, play every second move as an opponent:
-  if (args.status == 1):
+  if (args.status == "sat"):
     time_step_modulo = 0
   # else play as first player:
   else:
@@ -164,10 +177,20 @@ if __name__ == '__main__':
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
       if (args.validation == "static"):
-        cur_move_model = run_sat_solver(m,moves_played_vars)
+        # if assertion check enabled, we add the assertions to the assumptions:
+        if (k == len(parsed_instance.parsed_prefix) -1 and args.assertion_check == 1):
+          temp_assumptions = list(moves_played_vars)
+          temp_assumptions.extend(assertion_list)
+          #print(temp_assumptions)
+          cur_move_model = run_sat_solver(m,temp_assumptions)
+          #print(cur_move_model)
+        else:
+          cur_move_model = run_sat_solver(m,moves_played_vars)
         #print(parsed_instance.parsed_prefix[k][1])
         Cert_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
+        if (k == len(parsed_instance.parsed_prefix) -1 and args.assertion_check == 1):
+          print("Assertion check complete, play valid")
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
         if (instance_type == "qcir"):
