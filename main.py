@@ -47,13 +47,22 @@ def run_quabs_solver(k,assm):
   #print(flipped_and_assumed_string)
   result = subprocess.run(['./solvers/quabs/quabs', '--partial-assignment', 'intermediate_files/temp_qbf.qcir'], stdout=subprocess.PIPE)
   output = result.stdout.decode('utf-8')
+
+  int_partial_assignment = []
+
+  # we take the status of the interactive play:
+  if ("r UNSAT" in output):
+    cur_status = "UNSAT"
+  else:
+    cur_status = "SAT"
   #print(output)
-  if ("r UNSAT" not in output):
-    partial_assignment = output.split("\n")[0][2:-2].split(" ")
-    int_partial_assignment = []
+  #if ("r UNSAT" not in output):
+  partial_assignment = output.split("\n")[0][2:-2].split(" ")
+  # if assignment is given:
+  if ("V " in output):
     for var in partial_assignment:
       int_partial_assignment.append(int(var))
-  return int_partial_assignment
+  return int_partial_assignment, cur_status
 
 
 # run qbf solver with assumptions and return the outer most assignment:
@@ -89,6 +98,10 @@ def extract_player_move(model, first_vars):
       cur_assignment.append(var)
     elif (-var in model):
       cur_assignment.append(-var)
+    else:
+      # we interpret as open variable, i.e., any assignment would give UNSAT
+      # we always take the negation:
+      cur_assignment.append(-var)
   return cur_assignment
 
 
@@ -106,7 +119,7 @@ if __name__ == '__main__':
                                   validation type:
                                   static = only using certificate (default)
                                   dynamic = only using QBF solver
-                                  hybrid = using certificate for first n layers and QBF solver for the rest'''),default = 'static')
+                                  hybrid = using certificate for first n layers and QBF solver for the rest(TODO)'''),default = 'static')
   parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
   parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.txt')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
@@ -194,11 +207,11 @@ if __name__ == '__main__':
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
         if (instance_type == "qcir"):
-          cur_move_model = run_quabs_solver(k,moves_played_vars)
+          cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars)
         else:
           cur_move_model = run_depqbf_solver(k,moves_played_vars)
         QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
-        print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
+        print("L"+ str(k) + " QBF-player plays: ", QBF_player_move, "     status : ",cur_status)
     # if white player (for now user), then we get the move from terminal:
     elif (args.player == 'random'):
       number_of_vars = len(parsed_instance.parsed_prefix[k][1])
@@ -219,13 +232,24 @@ if __name__ == '__main__':
       moves_played_vars.extend(second_player_assignment)
     else:
       second_player_move = input("\nEnter your move: ")
+      #print(list(second_player_move))
       second_player_assignment = second_player_move.split(" ")
+      #print(second_player_assignment)
 
       int_second_player_assignment = []
       for var in second_player_assignment:
+        if (var == ""):
+          continue
         int_second_player_assignment.append(int(var))
-      print(int_second_player_assignment)
+
+      complete_assignment = []
+      for var in parsed_instance.parsed_prefix[k][1]:
+        if (var in int_second_player_assignment):
+          complete_assignment.append(int(var))
+        else:
+          complete_assignment.append(-int(var))
+      print("complete move: ",complete_assignment)
 
       # adding the second player assignment to the moves played for later assumptions:
-      moves_played_vars.extend(int_second_player_assignment)
+      moves_played_vars.extend(complete_assignment)
 

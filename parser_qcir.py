@@ -115,16 +115,20 @@ class PaserQCIR:
   def flip_and_assume(self, k, assum):
 
     flipped_and_assumed_string = ''
+    append_at_end = ""
 
     for i in range(len(self.parsed_prefix)):
       layer_string = ",".join(str(x) for x in self.parsed_prefix[i][1])
       if i < k:
-        flipped_and_assumed_string += "exists(" + layer_string + ")\n"
+        append_at_end += "exists(" + layer_string + ")\n"
+        #flipped_and_assumed_string += "exists(" + layer_string + ")\n"
       elif (self.parsed_prefix[i][0] == "e"):
         flipped_and_assumed_string += "exists(" + layer_string + ")\n"
       else:
         flipped_and_assumed_string += "forall(" + layer_string + ")\n"
 
+    flipped_and_assumed_string += append_at_end
+    
     # new output gate, assert it is not in the existing gates:
     new_output_gate = self.output_gate + 1
     assert(new_output_gate not in self.all_gates)
