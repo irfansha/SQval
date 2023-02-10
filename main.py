@@ -37,8 +37,8 @@ def run_sat_solver(m, assm):
 
 # run qbf solver with assumptions and return the outer most assignment:
 # creates a new qcir encoding with assumptions and gets the assignment:
-def run_quabs_solver(k,assm):
-  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm)
+def run_quabs_solver(k,assm, assertions):
+  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm, assertions)
   f = open("intermediate_files/temp_qbf.qcir","w")
   f.write(flipped_and_assumed_string)
   f.close()
@@ -51,19 +51,22 @@ def run_quabs_solver(k,assm):
   int_partial_assignment = []
 
   #print(output)
-  #if ("r UNSAT" not in output):
+  if ("r UNSAT" in output):
+    cur_status = "UNSAT"
+  else:
+    cur_status = "SAT"
   partial_assignment = output.split("\n")[0][2:-2].split(" ")
   # if assignment is given:
   if ("V " in output):
     for var in partial_assignment:
       int_partial_assignment.append(int(var))
-  return int_partial_assignment
+  return int_partial_assignment, cur_status
 
 
 # run qbf solver with assumptions and return the outer most assignment:
 # creates a new qdmiacs encoding with assumptions and gets the assignment:
-def run_depqbf_solver(k,assm):
-  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm)
+def run_depqbf_solver(k,assm, assertions):
+  flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm, assertions)
   f = open("intermediate_files/temp_qbf.qdimacs","w")
   f.write(flipped_and_assumed_string)
   f.close()
@@ -76,13 +79,19 @@ def run_depqbf_solver(k,assm):
   int_partial_assignment = []
 
   output_lines = output.split("\n")
+
+  if ("s cnf 0" in output):
+    cur_status = "UNSAT"
+  else:
+    cur_status = "SAT"
+
   for i in range(1,len(output_lines)):
     # making sure that the line is assignment:
     if ('V' in output_lines[i]):
       cur_var = output_lines[i].split(" ")[-2]
       assert(len(output_lines[i].split(" ")) == 3)
       int_partial_assignment.append(int(cur_var))
-  return int_partial_assignment
+  return int_partial_assignment, cur_status
 
 
 # for each variable in the first player move, we check if the assignment is true or false and return the assignment for entire block:
@@ -99,6 +108,16 @@ def extract_player_move(model, first_vars):
       cur_assignment.append(-var)
   return cur_assignment
 
+def status_print(cur_status, args):
+ if (cur_status == "SAT"):
+    # if the current status is different than the status provided, then it is an error:
+    if(args.status == "unsat"):
+      print("ERROR: status change in the play from UNSAT -> SAT")
+      return True
+ else:
+    if(args.status == "sat"):
+      print("ERROR: status change in the play from SAT -> UNSAT")
+      return True
 
 # Main:
 if __name__ == '__main__':
@@ -116,7 +135,7 @@ if __name__ == '__main__':
                                   dynamic = only using QBF solver
                                   hybrid = using certificate for first n layers and QBF solver for the rest(TODO)'''),default = 'static')
   parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
-  parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.txt')
+  parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.cnf')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
   parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = 0)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
@@ -159,15 +178,10 @@ if __name__ == '__main__':
 
 
   if (args.assertion_check == 1):
+
     # we parse the assertions file:
-    # we expect a single line separated with white spaces:
-    with open(args.assertion_infile,"r") as f:
-      first_line = f.readline()
-      assertion_line_list = first_line.strip("\n").split(" ")
-      assertion_list = []
-      for var in assertion_line_list:
-        assertion_list.append(int(var))
-    
+    assertion_formula = CNF(from_file=args.assertion_infile)
+    print(assertion_formula.clauses)
   
   # sat certificate, play every second move as an opponent:
   if (args.status == "sat"):
@@ -185,28 +199,23 @@ if __name__ == '__main__':
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
       if (args.validation == "static"):
-        # if assertion check enabled, we add the assertions to the assumptions:
-        if (k == len(parsed_instance.parsed_prefix) -1 and args.assertion_check == 1):
-          temp_assumptions = list(moves_played_vars)
-          temp_assumptions.extend(assertion_list)
-          #print(temp_assumptions)
-          cur_move_model = run_sat_solver(m,temp_assumptions)
-          #print(cur_move_model)
-        else:
-          cur_move_model = run_sat_solver(m,moves_played_vars)
+        cur_move_model = run_sat_solver(m,moves_played_vars)
         #print(parsed_instance.parsed_prefix[k][1])
         Cert_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
-        if (k == len(parsed_instance.parsed_prefix) -1 and args.assertion_check == 1):
-          print("Assertion check complete, play valid")
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
         if (instance_type == "qcir"):
-          cur_move_model = run_quabs_solver(k,moves_played_vars)
+          # we do not have any assertion clauses:
+          cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,[])
         else:
-          cur_move_model = run_depqbf_solver(k,moves_played_vars)
+          # we do not have any assertion clauses:
+          cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[])
         QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
+        is_error = status_print(cur_status, args)
+        if (is_error == True):
+            break
     # if white player (for now user), then we get the move from terminal:
     elif (args.player == 'random'):
       number_of_vars = len(parsed_instance.parsed_prefix[k][1])
@@ -248,3 +257,22 @@ if __name__ == '__main__':
       # adding the second player assignment to the moves played for later assumptions:
       moves_played_vars.extend(complete_assignment)
 
+
+  # final run to check the status and assertion:
+  # we use the qbf solver:
+  if (instance_type == "qcir"):
+    if (args.assertion_check == 0):
+      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars)
+    else:
+      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,assertion_formula.clauses)
+  else:
+    if (args.assertion_check == 0):
+      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars)
+    else:
+      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,assertion_formula.clauses)
+
+  is_error = status_print(cur_status, args)
+  if (is_error == True):
+    print("Validation failed")
+  else:
+    print("Assertion validated")

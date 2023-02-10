@@ -112,7 +112,7 @@ class PaserQCIR:
     self.parse_gates(gate_lines)
 
   # we flip universal layers in first k layers and add assumption as a new intermediate gate:
-  def flip_and_assume(self, k, assum):
+  def flip_and_assume(self, k, assum, assertion):
 
     flipped_and_assumed_string = ''
     append_at_end = ""
@@ -128,9 +128,18 @@ class PaserQCIR:
         flipped_and_assumed_string += "forall(" + layer_string + ")\n"
 
     flipped_and_assumed_string += append_at_end
-    
+
+    # we add the assertions cnf into the encoding:
+    new_gates = []
+    assertion_gates_string = ""
+    new_gate = self.output_gate
+    for clause in assertion:
+      new_gate += 1
+      assertion_gates_string += str(new_gate) + "=" + "or(" + ",".join(str(x) for x in clause) + ")\n"
+      new_gates.append(new_gate)
+
     # new output gate, assert it is not in the existing gates:
-    new_output_gate = self.output_gate + 1
+    new_output_gate = new_gate + 1
     assert(new_output_gate not in self.all_gates)
     flipped_and_assumed_string += "output(" + str(new_output_gate) + ")\n"
 
@@ -138,10 +147,13 @@ class PaserQCIR:
     for line in self.parsed_gates:
       flipped_and_assumed_string += line[1] + "=" + line[0] + "(" + ",".join(line[2]) + ")\n"
 
+    flipped_and_assumed_string += assertion_gates_string
 
     # new output gate, with assumptions + self.output_gate:
     temp_assum = list(assum)
     temp_assum.append(self.output_gate)
+    # adding the gates from assertions:
+    temp_assum.extend(new_gates)
     flipped_and_assumed_string += str(new_output_gate) + "=and(" + ",".join(str(x) for x in temp_assum) + ")"
 
     return flipped_and_assumed_string

@@ -75,12 +75,12 @@ class PaserQDIMACS:
     self.parse_prefix(prefix_lines)
 
   # we flip universal layers in first k layers and add assumption TODO:
-  def flip_and_assume(self, k, assum):
+  def flip_and_assume(self, k, assum, assertions):
 
     flipped_and_assumed_string = ''
 
     # printing preamble:
-    flipped_and_assumed_string += " ".join(self.preamble[:-1]) + " " +str(int(self.preamble[-1]) + len(assum)) + "\n"
+    flipped_and_assumed_string += " ".join(self.preamble[:-1]) + " " +str(int(self.preamble[-1]) + len(assum) + len(assertions)) + "\n"
 
     first_layers = ""
     for i in range(len(self.parsed_prefix)):
@@ -104,6 +104,8 @@ class PaserQDIMACS:
     for var in assum:
       flipped_and_assumed_string += str(var) + " 0\n"
 
+    for clause in assertions:
+      flipped_and_assumed_string += " ".join(str(x) for x in clause) + " 0\n"
 
     # printing all the gates to the file:
     for line in self.clauses:
