@@ -50,11 +50,6 @@ def run_quabs_solver(k,assm):
 
   int_partial_assignment = []
 
-  # we take the status of the interactive play:
-  if ("r UNSAT" in output):
-    cur_status = "UNSAT"
-  else:
-    cur_status = "SAT"
   #print(output)
   #if ("r UNSAT" not in output):
   partial_assignment = output.split("\n")[0][2:-2].split(" ")
@@ -62,7 +57,7 @@ def run_quabs_solver(k,assm):
   if ("V " in output):
     for var in partial_assignment:
       int_partial_assignment.append(int(var))
-  return int_partial_assignment, cur_status
+  return int_partial_assignment
 
 
 # run qbf solver with assumptions and return the outer most assignment:
@@ -79,14 +74,14 @@ def run_depqbf_solver(k,assm):
   output = result.stdout.decode('utf-8')
   #print(output)
   int_partial_assignment = []
-  if ("s cnf 0" not in output):
-    output_lines = output.split("\n")
-    for i in range(1,len(output_lines)):
-      # making sure that the line is assignment:
-      if ('V' in output_lines[i]):
-        cur_var = output_lines[i].split(" ")[-2]
-        assert(len(output_lines[i].split(" ")) == 3)
-        int_partial_assignment.append(int(cur_var))
+
+  output_lines = output.split("\n")
+  for i in range(1,len(output_lines)):
+    # making sure that the line is assignment:
+    if ('V' in output_lines[i]):
+      cur_var = output_lines[i].split(" ")[-2]
+      assert(len(output_lines[i].split(" ")) == 3)
+      int_partial_assignment.append(int(cur_var))
   return int_partial_assignment
 
 
@@ -207,11 +202,11 @@ if __name__ == '__main__':
       elif (args.validation == "dynamic"):
         #print(moves_played_vars)
         if (instance_type == "qcir"):
-          cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars)
+          cur_move_model = run_quabs_solver(k,moves_played_vars)
         else:
           cur_move_model = run_depqbf_solver(k,moves_played_vars)
         QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
-        print("L"+ str(k) + " QBF-player plays: ", QBF_player_move, "     status : ",cur_status)
+        print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
     # if white player (for now user), then we get the move from terminal:
     elif (args.player == 'random'):
       number_of_vars = len(parsed_instance.parsed_prefix[k][1])

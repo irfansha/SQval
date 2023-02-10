@@ -90,11 +90,15 @@ class PaserQDIMACS:
       elif (self.parsed_prefix[i][0] == "e"):
         # we merge the first layer:
         if(i == k):
-          flipped_and_assumed_string += "e" + first_layers + " " +layer_string + " 0\n"
+          flipped_and_assumed_string += "e " + layer_string + " 0\n"
         else:
           flipped_and_assumed_string += "e " + layer_string + " 0\n"
       else:
         flipped_and_assumed_string += "a " + layer_string + " 0\n"
+
+    # appending the flipping at the end:
+    flipped_and_assumed_string += "e " + first_layers + " 0\n"
+    
 
     # adding assumption clauses:
     for var in assum:
