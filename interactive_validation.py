@@ -262,12 +262,12 @@ if __name__ == '__main__':
   # we use the qbf solver:
   if (instance_type == "qcir"):
     if (args.assertion_check == 0):
-      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars)
+      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,[])
     else:
       cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,assertion_formula.clauses)
   else:
     if (args.assertion_check == 0):
-      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars)
+      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[])
     else:
       cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,assertion_formula.clauses)
 
@@ -275,4 +275,6 @@ if __name__ == '__main__':
   if (is_error == True):
     print("Validation failed")
   else:
-    print("Assertion validated")
+    print("Validation successful")
+    if (args.assertion_check == 1):
+      print("Assertion validated")
