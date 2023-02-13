@@ -114,6 +114,84 @@ class PaserQDIMACS:
 
     return flipped_and_assumed_string
 
+  # we append the certificate to the current instance
+  # other than the shared variables, we renumber the rest of certificate varaibles:
+  # write the large instance to the file directly:
+  def renumber_and_append_wrf(self, certificate, shared_vars):
+
+    f = open("intermediate_files/appended_instance.qdimacs","w")
+
+    clauses_string = ""
+    # first writing the instance clauses to the new file:
+    for clause in self.clauses:
+      clauses_string += clause + "\n"
+      #f.write(clause + "\n")
+
+
+    # we start from max variable + 1 in the instance:
+    cur_max_var = int(self.preamble[2]) + 1
+    # remembering for the preamble:
+    max_var = int(self.preamble[2]) + 1
+    
+    cert_vars_map = dict()
+
+    # iterating through certificate clauses:
+    for clause in certificate.clauses:
+      new_cur_clause = []
+      for var in clause:
+        if (var > 0):
+          non_negated_int = var
+        else:
+          non_negated_int = -var
+        if (non_negated_int in shared_vars):
+          new_cur_clause.append(var)
+        else:
+          if (non_negated_int in cert_vars_map):
+            if (int(var) > 0):
+              new_cur_clause.append(cert_vars_map[non_negated_int])
+            else:
+              new_cur_clause.append(-cert_vars_map[non_negated_int])
+          else:
+            # adding the new var in to dict:
+            cert_vars_map[non_negated_int] = cur_max_var
+            if (int(var) > 0):
+              new_cur_clause.append(cur_max_var)
+            else:
+              new_cur_clause.append(-cur_max_var)
+            cur_max_var += 1
+
+          #print(var)
+      clauses_string += " ".join(str(var) for var in new_cur_clause) + " 0\n"
+      #f.write(" ".join(str(var) for var in new_cur_clause) + " 0\n")
+    #f.close()
+
+    # lastly appending the preamble with computed vars and clauses:
+    prefix_string = ''
+
+    # printing preamble:
+    prefix_string += "p cnf " + str(cur_max_var-1) + " " + str(int(self.preamble[3]) + len(certificate.clauses)) + "\n"
+
+    
+
+    # then appending the prefix with new variables:       
+    for layer in self.parsed_prefix:
+      prefix_string += layer[0] + " " + " ".join(str(var) for var in layer[1]) + " 0\n"
+    
+    #print(self.parsed_prefix)
+
+    # adding extra variables:
+    last_layer = "e "
+    for var in range(max_var, cur_max_var):
+      last_layer += str(var) + " "
+    
+    last_layer += "0\n"
+    #print(last_layer)
+
+    # we append the prefix string to the head of the file:
+    f.write(prefix_string)
+    f.write(last_layer)
+    f.write(clauses_string)
+    f.close()
 
   # assuming no open variables:
   def __init__(self, input_qbf):
