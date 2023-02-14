@@ -1,0 +1,150 @@
+# Move variables: 
+exists(1, 2)
+forall(3, 4)
+exists(5, 6)
+forall(7, 8)
+exists(9, 10)
+# witness variables: 
+exists(11, 12, 13, 14, 15, 16)
+output(127)
+# Black does not overwrite the white moves : 
+17 = or(-5, 3)
+18 = or(-3, 5)
+19 = and(17, 18)
+20 = or(-6, 4)
+21 = or(-4, 6)
+22 = and(20, 21)
+23 = and(19, 22)
+24 = or(-9, 3)
+25 = or(-3, 9)
+26 = and(24, 25)
+27 = or(-10, 4)
+28 = or(-4, 10)
+29 = and(27, 28)
+30 = and(26, 29)
+31 = or(-9, 7)
+32 = or(-7, 9)
+33 = and(31, 32)
+34 = or(-10, 8)
+35 = or(-8, 10)
+36 = and(34, 35)
+37 = and(33, 36)
+# Witness positions can only have the black moves : 
+38 = or(-11, 1)
+39 = or(-1, 11)
+40 = and(38, 39)
+41 = or(-12, 2)
+42 = or(-2, 12)
+43 = and(41, 42)
+44 = and(40, 43)
+45 = or(-11, 5)
+46 = or(-5, 11)
+47 = and(45, 46)
+48 = or(-12, 6)
+49 = or(-6, 12)
+50 = and(48, 49)
+51 = and(47, 50)
+52 = or(-11, 9)
+53 = or(-9, 11)
+54 = and(52, 53)
+55 = or(-12, 10)
+56 = or(-10, 12)
+57 = and(55, 56)
+58 = and(54, 57)
+59 = or(44, 51, 58)
+60 = or(-13, 1)
+61 = or(-1, 13)
+62 = and(60, 61)
+63 = or(-14, 2)
+64 = or(-2, 14)
+65 = and(63, 64)
+66 = and(62, 65)
+67 = or(-13, 5)
+68 = or(-5, 13)
+69 = and(67, 68)
+70 = or(-14, 6)
+71 = or(-6, 14)
+72 = and(70, 71)
+73 = and(69, 72)
+74 = or(-13, 9)
+75 = or(-9, 13)
+76 = and(74, 75)
+77 = or(-14, 10)
+78 = or(-10, 14)
+79 = and(77, 78)
+80 = and(76, 79)
+81 = or(66, 73, 80)
+82 = or(-15, 1)
+83 = or(-1, 15)
+84 = and(82, 83)
+85 = or(-16, 2)
+86 = or(-2, 16)
+87 = and(85, 86)
+88 = and(84, 87)
+89 = or(-15, 5)
+90 = or(-5, 15)
+91 = and(89, 90)
+92 = or(-16, 6)
+93 = or(-6, 16)
+94 = and(92, 93)
+95 = and(91, 94)
+96 = or(-15, 9)
+97 = or(-9, 15)
+98 = and(96, 97)
+99 = or(-16, 10)
+100 = or(-10, 16)
+101 = and(99, 100)
+102 = and(98, 101)
+103 = or(88, 95, 102)
+104 = and(-11, -12)
+# disjunction of all start boarder positions : 
+# position clauses: 
+# neighbour clauses: 
+105 = and(-13, 14)
+# if then clause : 
+106 = or(-104, 105)
+# position clauses: 
+107 = and(-11, 12)
+# neighbour clauses: 
+108 = and(13, 14)
+109 = and(13, -14)
+110 = and(-13, -14)
+111 = or(108, 109, 110)
+# if then clause : 
+112 = or(-107, 111)
+# position clauses: 
+113 = and(11, -12)
+# neighbour clauses: 
+# if then clause : 
+114 = or(-113, 109)
+# position clauses: 
+115 = and(11, 12)
+# neighbour clauses: 
+# if then clause : 
+116 = or(-115, 108)
+# position clauses: 
+# neighbour clauses: 
+117 = and(-15, 16)
+# if then clause : 
+118 = or(-110, 117)
+# position clauses: 
+# neighbour clauses: 
+119 = and(15, 16)
+120 = and(15, -16)
+121 = and(-15, -16)
+122 = or(119, 120, 121)
+# if then clause : 
+123 = or(-105, 122)
+# position clauses: 
+# neighbour clauses: 
+# if then clause : 
+124 = or(-109, 120)
+# position clauses: 
+# neighbour clauses: 
+# if then clause : 
+125 = or(-108, 119)
+# End boarder clauses : 
+# disjunction of all end boarder positions : 
+126 = or(120, 119)
+# Final conjunction gate : 
+127 = and(-23, -30, -37, 59, 81, 103, 104, 106, 112, 114, 116, 118, 123, 124, 125, 126)

@@ -1,0 +1,39 @@
+# Move variables: 
+exists(1)
+forall(2)
+exists(3)
+# witness variables: 
+exists(4, 5)
+output(25)
+# Black does not overwrite the white moves : 
+6 = or(-3, 2)
+7 = or(-2, 3)
+8 = and(6, 7)
+# Witness positions can only have the black moves : 
+9 = or(-4, 1)
+10 = or(-1, 4)
+11 = and(9, 10)
+12 = or(-4, 3)
+13 = or(-3, 4)
+14 = and(12, 13)
+15 = or(11, 14)
+16 = or(-5, 1)
+17 = or(-1, 5)
+18 = and(16, 17)
+19 = or(-5, 3)
+20 = or(-3, 5)
+21 = and(19, 20)
+22 = or(18, 21)
+# disjunction of all start boarder positions : 
+# position clauses: 
+# neighbour clauses: 
+# if then clause : 
+23 = or(4, 5)
+# position clauses: 
+# neighbour clauses: 
+# if then clause : 
+24 = or(-4, 5)
+# End boarder clauses : 
+# disjunction of all end boarder positions : 
+# Final conjunction gate : 
+25 = and(-8, 15, 22, -4, 23, 24, 5)

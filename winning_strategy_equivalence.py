@@ -20,11 +20,10 @@ def run_depqbf_solver():
   output = result.stdout.decode('utf-8')
   #print(output)
 
-  output_lines = output.split("\n")
-
   if ("UNSAT" in output):
     cur_status = "UNSAT"
   else:
+    assert("SAT" in output)
     cur_status = "SAT"
 
   return cur_status
@@ -46,10 +45,10 @@ def status_print(cur_status, args):
 if __name__ == '__main__':
   text = "Given two QBFs (qdimacs) Q1 and Q2 and a certificate of Q1 (qdimacs), we check the winning strategy equivalence"
   parser = argparse.ArgumentParser(description=text,formatter_class=argparse.RawTextHelpFormatter)
-  parser.add_argument("--certificate", help="certificate path (AAG/qdimacs)", default = 'intermediate_files/hein_04_equivalence/SN_certificate.aag')
-  parser.add_argument("--instance1", help="qbf instance (qdimacs)", default = 'intermediate_files/hein_04_equivalence/SN.qdimacs')
-  parser.add_argument("--instance2", help="qbf instance (qdimacs)", default = 'intermediate_files/hein_04_equivalence/LN.qdimacs')
-  parser.add_argument("--shared_variables", help="file with a list of variables that are shared with respect to the winning strategy", default = 'intermediate_files/hein_04_equivalence/shared_variables.txt')
+  parser.add_argument("--certificate", help="certificate path (AAG/qdimacs)", default = 'intermediate_files/hein_04_05_equivalence/SN_certificate.aag')
+  parser.add_argument("--instance1", help="qbf instance (qdimacs)", default = 'intermediate_files/hein_04_05_equivalence/SN.qdimacs')
+  parser.add_argument("--instance2", help="qbf instance (qdimacs)", default = 'intermediate_files/hein_04_05_equivalence/LN.qdimacs')
+  parser.add_argument("--shared_variables", help="file with a list of variables that are shared with respect to the winning strategy", default = 'intermediate_files/hein_04_05_equivalence/shared_variables.txt')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
 
   args = parser.parse_args()
@@ -87,7 +86,10 @@ if __name__ == '__main__':
 
   # renumber the certificate non-relevant variables:
   # append the certificate to the instance2:
-  parsed_instance2.renumber_and_append_wrf(certificate_formula,shared_vars_int)
+  if (args.status == "sat"):
+    parsed_instance2.sat_renumber_and_append_wrf(certificate_formula,shared_vars_int)
+  else:
+    parsed_instance2.unsat_renumber_and_append_wrf(certificate_formula,shared_vars_int)
 
   # check if the second instance is true:
   # for now we are assuming that the both instances are true and have same winning strategy corresponding to the shared variables:

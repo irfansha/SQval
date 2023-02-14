@@ -117,7 +117,7 @@ class PaserQDIMACS:
   # we append the certificate to the current instance
   # other than the shared variables, we renumber the rest of certificate varaibles:
   # write the large instance to the file directly:
-  def renumber_and_append_wrf(self, certificate, shared_vars):
+  def sat_renumber_and_append_wrf(self, certificate, shared_vars):
 
     f = open("intermediate_files/appended_instance.qdimacs","w")
 
@@ -192,6 +192,111 @@ class PaserQDIMACS:
     f.write(last_layer)
     f.write(clauses_string)
     f.close()
+
+  # we append the certificate to the current instance
+  # other than the shared variables, we renumber the rest of certificate varaibles:
+  # we flip the shared universal variables and add to the end:
+  # write the large instance to the file directly:
+  def unsat_renumber_and_append_wrf(self, certificate, shared_vars):
+
+    f = open("intermediate_files/appended_instance.qdimacs","w")
+
+    clauses_string = ""
+    # first writing the instance clauses to the new file:
+    for clause in self.clauses:
+      clauses_string += clause + "\n"
+      #f.write(clause + "\n")
+
+
+    # we start from max variable + 1 in the instance:
+    cur_max_var = int(self.preamble[2]) + 1
+    # remembering for the preamble:
+    max_var = int(self.preamble[2]) + 1
+    
+    cert_vars_map = dict()
+
+    # iterating through certificate clauses:
+    for clause in certificate.clauses:
+      new_cur_clause = []
+      for var in clause:
+        if (var > 0):
+          non_negated_int = var
+        else:
+          non_negated_int = -var
+        if (non_negated_int in shared_vars):
+          new_cur_clause.append(var)
+        else:
+          if (non_negated_int in cert_vars_map):
+            if (int(var) > 0):
+              new_cur_clause.append(cert_vars_map[non_negated_int])
+            else:
+              new_cur_clause.append(-cert_vars_map[non_negated_int])
+          else:
+            # adding the new var in to dict:
+            cert_vars_map[non_negated_int] = cur_max_var
+            if (int(var) > 0):
+              new_cur_clause.append(cur_max_var)
+            else:
+              new_cur_clause.append(-cur_max_var)
+            cur_max_var += 1
+
+          #print(var)
+      clauses_string += " ".join(str(var) for var in new_cur_clause) + " 0\n"
+      #f.write(" ".join(str(var) for var in new_cur_clause) + " 0\n")
+    #f.close()
+
+    # lastly appending the preamble with computed vars and clauses:
+    prefix_string = ''
+
+    # printing preamble:
+    prefix_string += "p cnf " + str(cur_max_var-1) + " " + str(int(self.preamble[3]) + len(certificate.clauses)) + "\n"
+
+    # remembering shared universal varibles:
+    shared_universal_variables = []
+
+    # then appending the prefix with new variables:       
+    for layer in self.parsed_prefix:
+      # we only add universal variables which are not in the share variables:
+      if (layer[0] == 'a'):
+        universal_string = ""
+        for var in layer[1]:
+          if var not in shared_vars:
+            universal_string += str(var) + " "
+          else:
+            # adding the variables to shared universal list, we will add in the inner most layer:
+            shared_universal_variables.append(var)
+        # if some non-shared universal variables present:
+        if (universal_string != ""):
+          prefix_string += layer[0] + " " + universal_string + "0\n"
+      else:
+        prefix_string += layer[0] + " " + " ".join(str(var) for var in layer[1]) + " 0\n"
+    
+    #print(self.parsed_prefix)
+
+
+    # adding extra variables to the last layer:
+    last_layer = "e "
+    for var in range(max_var, cur_max_var):
+      last_layer += str(var) + " "
+    
+    last_layer += "0\n"
+    #print(last_layer)
+
+    # adding the shared universal variables to the inner layer:
+    shared_universal_variable_layer = "e " + " ".join(str(var) for var in shared_universal_variables) + " 0\n"
+
+
+    # we append the prefix string to the head of the file:
+    f.write(prefix_string)
+    # if cur_max_var is more than max_var, we have extra variables
+    if (max_var != cur_max_var):
+      f.write(last_layer)
+    # if there are any shared universal layers we add the extra existential layer:
+    if (len(shared_universal_variables) != 0):
+      f.write(shared_universal_variable_layer)
+    f.write(clauses_string)
+    f.close()
+
 
   # assuming no open variables:
   def __init__(self, input_qbf):
