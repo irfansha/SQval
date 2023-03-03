@@ -26,7 +26,7 @@ help:
     python3 main.py -h
 
 main options:
-    --status [0/1] 0 is UNSAT and 1 is SAT, needed to be specified for interactive play
+    --status [sat/unsat], needed to be specified for interactive play
 
     --player [random/user] random generates random assignments as an opponent, for user we can input the assignments
 
