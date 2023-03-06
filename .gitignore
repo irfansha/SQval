@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+bin
+lib64
+pyvenv.cfg
+intermediate_files/*.qcir
+intermediate_files/*.cnf

@@ -137,7 +137,7 @@ if __name__ == '__main__':
   parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
   parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.cnf')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
-  parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = 0)
+  parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = None)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
 
   args = parser.parse_args()
@@ -158,8 +158,9 @@ if __name__ == '__main__':
     instance_type = "qcir"
 
   if (args.player == 'random'):
-    random.seed(args.seed)
-    print("Initializing random generator with seed: ", args.seed)
+    if args.seed:
+        random.seed(args.seed)
+        print("Initializing random generator with seed: ", args.seed)
 
   if (args.validation == "static"):
     # checking the first line of the file for the certificate type:

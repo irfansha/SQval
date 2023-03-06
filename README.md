@@ -7,7 +7,7 @@ Accepts QBF instance in QCIR or QDIMACS format and allows interactive play for v
 
 Play with QBF certificate:
 
-    python3 main.py --certificate intermediate_files/LN_hein_04_3x3_05_SAT/certificate.aag --instance intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir
+    python3 interactive_validation.py --certificate intermediate_files/LN_hein_04_3x3_05_SAT/certificate.aag --instance intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir
 
 Sample output:
 
@@ -15,7 +15,7 @@ Sample output:
 
 Play with QBF solver, for SAT instance:
 
-    python3 main.py --instance intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir --status 1 --player user --validation dynamic
+    python3 interactive_validation.py --instance intermediate_files/LN_hein_04_3x3_05_SAT/qbf.qcir --status 1 --player user --validation dynamic
 
 Sample output:
 
@@ -23,7 +23,7 @@ Sample output:
 
 help:
 
-    python3 main.py -h
+    python3 interactive_validation.py -h
 
 main options:
     --status [sat/unsat], needed to be specified for interactive play
@@ -46,6 +46,10 @@ Uses SAT solver from pysat
 Install using:
 
     pip install python-sat
+
+Or using the provided `requirements.txt` file:
+
+    pip install -r requirements.txt
 
 ## Author:
 
