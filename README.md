@@ -1,9 +1,10 @@
 # **SQBFval**
-A tool for Scalable QBF validation
+A tool for Scalable QBF validation and Winning strategy equivalence
+
+
+# QBF validation:
 
 Accepts QBF instance in QCIR or QDIMACS format and allows interactive play for valiation with a QBF solver or a QBF Certificate.
-
-## Usage:
 
 Play with QBF certificate:
 
@@ -39,6 +40,31 @@ _Input:_  certificate in aag format for static validation and instance in QCIR/Q
 _Output:_  Paritial assignments in each layer for interactive valdiation and play
 
 
+# Winning strategy equivalence of two QBFs:
+
+Accepts
+ - two QBF instances in QDIMACS, Q1 and Q2.
+ - a certificate C1 of Q1
+ - a file listing shared variables of Q1, Q2 with which there is a common winning strategy
+
+Computes if C1 also holds for Q2 with respect to the shared variables.
+
+Example equivalence check of Hein_12 instance:
+
+    python3 winning_strategy_equivalence.py --instance1 intermediate_files/Hein_12_07_partial_equivalence/BOW_0.qdimacs --instance2 intermediate_files/Hein_12_07_partial_equivalence/BOW_1.qdimacs --certificate intermediate_files/Hein_12_07_partial_equivalence/cert_BOW_0.aag --shared_variables intermediate_files/Hein_12_07_partial_equivalence/shared_variables.txt
+
+Sample output: Formulas are winning strategy equivalent
+
+The above example essential checks if winning strategy of BOW_1.qdimacs instance holds for BOW_0.qdimacs.
+The equivalence holds from BOW_1 to BOW_0.
+
+However the equivalence does not hold from BOW_0 to BOW_1
+
+Example:
+
+    python3 winning_strategy_equivalence.py --instance1 intermediate_files/Hein_12_07_partial_equivalence/BOW_1.qdimacs --instance2 intermediate_files/Hein_12_07_partial_equivalence/BOW_0.qdimacs --certificate intermediate_files/Hein_12_07_partial_equivalence/cert_BOW_1.aag --shared_variables intermediate_files/Hein_12_07_partial_equivalence/shared_variables.txt
+
+Sample output: Formulas are winning strategy NOT equivalent
 
 ## Dependencies:
 Uses SAT solver from pysat
