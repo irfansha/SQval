@@ -65,15 +65,15 @@ def run_quabs_solver(k,assm, assertions):
 
 # run qbf solver with assumptions and return the outer most assignment:
 # creates a new qdmiacs encoding with assumptions and gets the assignment:
-def run_depqbf_solver(k,assm, assertions):
+def run_depqbf_solver(k,assm, assertions,temp_qbf_file):
   flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm, assertions)
-  f = open("intermediate_files/temp_qbf.qdimacs","w")
+  f = open(temp_qbf_file,"w")
   f.write(flipped_and_assumed_string)
   f.close()
   #print(k, assm)
 
   #print(flipped_and_assumed_string)
-  result = subprocess.run(['./solvers/depqbf/depqbf', '--qdo', '--no-dynamic-nenofex' , 'intermediate_files/temp_qbf.qdimacs'], stdout=subprocess.PIPE)
+  result = subprocess.run(['./solvers/depqbf/depqbf', '--qdo', '--no-dynamic-nenofex' , temp_qbf_file], stdout=subprocess.PIPE)
   output = result.stdout.decode('utf-8')
   #print(output)
   int_partial_assignment = []
@@ -134,8 +134,10 @@ if __name__ == '__main__':
                                   static = only using certificate (default)
                                   dynamic = only using QBF solver
                                   hybrid = using certificate for first n layers and QBF solver for the rest(TODO)'''),default = 'static')
+  parser.add_argument("--hybrid_depth", help="if hybrid validation enable, this depth specifies the swtich from certificate to solver", type=int,default = None)
   parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
   parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.cnf')
+  parser.add_argument("--qbf_intermediate_file", help=" path for intermediate qbf file",default = 'intermediate_files/temp_qbf.qdimacs')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
   parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = None)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
@@ -162,7 +164,7 @@ if __name__ == '__main__':
         random.seed(args.seed)
         print("Initializing random generator with seed: ", args.seed)
 
-  if (args.validation == "static"):
+  if (args.validation == "static" or args.validation == "hybrid"):
     # checking the first line of the file for the certificate type:
     with open(args.certificate,"r") as f:
       first_line = f.readline()
@@ -199,21 +201,25 @@ if __name__ == '__main__':
 
     # if first player then we extract the assignment:
     if (k%2 == time_step_modulo):
-      if (args.validation == "static"):
+      if (args.validation == "static" or (args.validation == "hybrid" and k < args.hybrid_depth)):
         cur_move_model = run_sat_solver(m,moves_played_vars)
         #print(parsed_instance.parsed_prefix[k][1])
         Cert_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " Cert-player plays:", Cert_player_move)
-      elif (args.validation == "dynamic"):
+        # remembering the current assignment for later:
+        moves_played_vars.extend(Cert_player_move)
+      elif (args.validation == "dynamic" or (args.validation == "hybrid" and k >= args.hybrid_depth)):
         #print(moves_played_vars)
         if (instance_type == "qcir"):
           # we do not have any assertion clauses:
-          cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,[])
+          cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,[],args.qbf_intermediate_file)
         else:
           # we do not have any assertion clauses:
-          cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[])
+          cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[],args.qbf_intermediate_file)
         QBF_player_move = extract_player_move(cur_move_model, parsed_instance.parsed_prefix[k][1])
         print("L"+ str(k) + " QBF-player plays: ", QBF_player_move)
+        # remembering the current assignment for later:
+        moves_played_vars.extend(QBF_player_move)
         is_error = status_print(cur_status, args)
         if (is_error == True):
             break
@@ -268,9 +274,9 @@ if __name__ == '__main__':
       cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,assertion_formula.clauses)
   else:
     if (args.assertion_check == 0):
-      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[])
+      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[],args.qbf_intermediate_file)
     else:
-      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,assertion_formula.clauses)
+      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,assertion_formula.clauses,args.qbf_intermediate_file)
 
   is_error = status_print(cur_status, args)
   if (is_error == True):
