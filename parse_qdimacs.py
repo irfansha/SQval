@@ -117,9 +117,9 @@ class PaserQDIMACS:
   # we append the certificate to the current instance
   # other than the shared variables, we renumber the rest of certificate varaibles:
   # write the large instance to the file directly:
-  def sat_renumber_and_append_wrf(self, certificate, shared_vars):
+  def sat_renumber_and_append_wrf(self, certificate, shared_vars, app_instance):
 
-    f = open("intermediate_files/appended_instance.qdimacs","w")
+    f = open(app_instance,"w")
 
     clauses_string = ""
     # first writing the instance clauses to the new file:
@@ -197,9 +197,9 @@ class PaserQDIMACS:
   # other than the shared variables, we renumber the rest of certificate varaibles:
   # we flip the shared universal variables and add to the end:
   # write the large instance to the file directly:
-  def unsat_renumber_and_append_wrf(self, certificate, shared_vars):
+  def unsat_renumber_and_append_wrf(self, certificate, shared_vars,app_instance):
 
-    f = open("intermediate_files/appended_instance.qdimacs","w")
+    f = open(app_instance,"w")
 
     clauses_string = ""
     # first writing the instance clauses to the new file:

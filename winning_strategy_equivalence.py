@@ -16,7 +16,7 @@ from parse_qdimacs import PaserQDIMACS as pqdimacs
 def run_depqbf_solver():
 
   #print(flipped_and_assumed_string)
-  result = subprocess.run(['./solvers/depqbf/depqbf', 'intermediate_files/appended_instance.qdimacs'], stdout=subprocess.PIPE)
+  result = subprocess.run(['./solvers/depqbf/depqbf', args.append_intermediate_file], stdout=subprocess.PIPE)
   output = result.stdout.decode('utf-8')
   #print(output)
 
@@ -50,6 +50,8 @@ if __name__ == '__main__':
   parser.add_argument("--instance2", help="qbf instance (qdimacs)", default = 'intermediate_files/hein_04_05_equivalence/LN.qdimacs')
   parser.add_argument("--shared_variables", help="file with a list of variables that are shared with respect to the winning strategy", default = 'intermediate_files/hein_04_05_equivalence/shared_variables.txt')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
+  parser.add_argument("--append_intermediate_file", help=" path for intermediate append file",default = 'intermediate_files/appended_instance.qdimacs')
+  parser.add_argument("--cert_intermediate_file", help=" path for intermediate certificate file",default = 'intermediate_files/translated_cert.cnf')
 
   args = parser.parse_args()
   print(args)
@@ -63,9 +65,9 @@ if __name__ == '__main__':
     certificate_formula = CNF(from_file=args.certificate)
   else:
     # first converting aiger to cnf:
-    cnf_translator_command = "python3 aag_to_dimacs.py --input_file " + args.certificate + " > intermediate_files/translated_cert.cnf"
+    cnf_translator_command = "python3 aag_to_dimacs.py --input_file " + args.certificate + " > " + args.cert_intermediate_file
     os.system(cnf_translator_command)
-    certificate_formula = CNF(from_file="intermediate_files/translated_cert.cnf")
+    certificate_formula = CNF(from_file=args.cert_intermediate_file)
 
   # parse instance1 and instance2
   parsed_instance1 = pqdimacs(args.instance1)
@@ -87,9 +89,9 @@ if __name__ == '__main__':
   # renumber the certificate non-relevant variables:
   # append the certificate to the instance2:
   if (args.status == "sat"):
-    parsed_instance2.sat_renumber_and_append_wrf(certificate_formula,shared_vars_int)
+    parsed_instance2.sat_renumber_and_append_wrf(certificate_formula,shared_vars_int,args.append_intermediate_file)
   else:
-    parsed_instance2.unsat_renumber_and_append_wrf(certificate_formula,shared_vars_int)
+    parsed_instance2.unsat_renumber_and_append_wrf(certificate_formula,shared_vars_int,args.append_intermediate_file)
 
   # check if the second instance is true:
   # for now we are assuming that the both instances are true and have same winning strategy corresponding to the shared variables:
