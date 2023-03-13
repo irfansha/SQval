@@ -138,6 +138,7 @@ if __name__ == '__main__':
   parser.add_argument("--assertion_check", help=" assertion check is enabled (1/0) (default 0)", type=int,default = 0)
   parser.add_argument("--assertion_infile", help=" assertions file path",default = 'intermediate_files/LN_hein_04_3x3_05_SAT/assertion.cnf')
   parser.add_argument("--qbf_intermediate_file", help=" path for intermediate qbf file",default = 'intermediate_files/temp_qbf.qdimacs')
+  parser.add_argument("--cert_intermediate_file", help=" path for intermediate certificate file",default = 'intermediate_files/temp_qbf.qdimacs')
   parser.add_argument("--status", help=" instance status sat/unsat (default sat)",default = "sat")
   parser.add_argument("--seed", help="seed value for random generater (default 0)", type=int,default = None)
   parser.add_argument("-v", help="verbose(0/1) (default 0)", type=int,default = 0)
@@ -173,9 +174,9 @@ if __name__ == '__main__':
       formula = CNF(from_file=args.certificate)
     else:
       # first converting aiger to cnf:
-      cnf_translator_command = "python3 aag_to_dimacs.py --input_file " + args.certificate + " > intermediate_files/translated_cert.cnf"
+      cnf_translator_command = "python3 aag_to_dimacs.py --input_file " + args.certificate + " > " + args.cert_intermediate_file
       os.system(cnf_translator_command)
-      formula = CNF(from_file="intermediate_files/translated_cert.cnf")
+      formula = CNF(from_file=args.cert_intermediate_file)
 
     m = Minisat22(bootstrap_with=formula.clauses)
 
