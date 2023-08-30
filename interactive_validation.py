@@ -39,10 +39,10 @@ def run_sat_solver(m, assm):
 # creates a new qcir encoding with assumptions and gets the assignment:
 def run_quabs_solver(k,assm, assertions,temp_qbf_file):
   flipped_and_assumed_string = parsed_instance.flip_and_assume(k,assm, assertions)
-  f = open("intermediate_files/temp_qbf.qcir","w")
+  f = open(temp_qbf_file,"w")
   f.write(flipped_and_assumed_string)
   f.close()
-  #print(k, assm)
+  print(k, assm)
 
   #print(flipped_and_assumed_string)
   result = subprocess.run(['./solvers/quabs/quabs', '--partial-assignment',temp_qbf_file], stdout=subprocess.PIPE)
@@ -50,7 +50,6 @@ def run_quabs_solver(k,assm, assertions,temp_qbf_file):
 
   int_partial_assignment = []
 
-  #print(output)
   if ("r UNSAT" in output):
     cur_status = "UNSAT"
   else:
@@ -270,14 +269,14 @@ if __name__ == '__main__':
   # we use the qbf solver:
   if (instance_type == "qcir"):
     if (args.assertion_check == 0):
-      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,[],args.qbf_intermediate_file)
+      cur_move_model, cur_status = run_quabs_solver(k+1,moves_played_vars,[],args.qbf_intermediate_file)
     else:
-      cur_move_model, cur_status = run_quabs_solver(k,moves_played_vars,assertion_formula.clauses,args.qbf_intermediate_file)
+      cur_move_model, cur_status = run_quabs_solver(k+1,moves_played_vars,assertion_formula.clauses,args.qbf_intermediate_file)
   else:
     if (args.assertion_check == 0):
-      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,[],args.qbf_intermediate_file)
+      cur_move_model, cur_status = run_depqbf_solver(k+1,moves_played_vars,[],args.qbf_intermediate_file)
     else:
-      cur_move_model, cur_status = run_depqbf_solver(k,moves_played_vars,assertion_formula.clauses,args.qbf_intermediate_file)
+      cur_move_model, cur_status = run_depqbf_solver(k+1,moves_played_vars,assertion_formula.clauses,args.qbf_intermediate_file)
 
   is_error = status_print(cur_status, args)
   if (is_error == True):
